@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { 
   Phone, KeyRound, ShieldCheck, User, ArrowRight, LogOut,
   Mic, Map, Car, FileCheck, Plane, Compass, Heart, PhoneCall, 
   Gift, Shield, Landmark, HardDrive, BookOpen, 
-  Wifi, ScanText, Store, QrCode, AlertCircle, CheckCircle2
+  Wifi, ScanText, Store, QrCode, CheckCircle2
 } from 'lucide-react';
 
 // --- UPGRADE MODULE 1: DIGILOCKER SANDBOX ---
@@ -425,8 +426,8 @@ function AuthSystem({ onAuthChange }) {
   );
 }
 
-// --- MAIN DASHBOARD WITH INTERACTIVE MODALS ---
-export default function Dashboard() {
+// --- MAIN DASHBOARD COMPONENT ---
+function DashboardContent() {
   const [activeTab, setActiveTab] = useState('all');
   const [currentUser, setCurrentUser] = useState(null);
   const [isKioskMode, setIsKioskMode] = useState(false);
@@ -447,7 +448,7 @@ export default function Dashboard() {
         <AuthSystem onAuthChange={(user) => setCurrentUser(user)} />
       </div>
 
-      {/* DASHBOARD CONTENT (Renders when logged in) */}
+      {/* DASHBOARD CONTENT (Renders only when logged in) */}
       {currentUser && (
         <>
           <div className="max-w-7xl mx-auto">
@@ -520,21 +521,21 @@ export default function Dashboard() {
 
                 {/* CORE FEATURES 1-15 */}
                 {[
-                  { id: '1', title: '1. Multilingual Voice Assistant', desc: 'Voice & text portal for 200+ Indian regional languages.', icon: Mic, color: 'indigo' },
-                  { id: '2', title: '2. Step-by-Step Guided Wizards', desc: 'Decision-tree workflows for administrative updates.', icon: Map, color: 'emerald' },
-                  { id: '3', title: '3. Parivahan & DL Hub', desc: "Learner's license, permanent DL, and vehicle renewal.", icon: Car, color: 'amber' },
-                  { id: '4', title: '4. Educational Document Verifier', desc: 'Board & University certificate authentication.', icon: FileCheck, color: 'purple' },
-                  { id: '5', title: '5. Passport Seva Guided Workflow', desc: 'Annexure creation, checklists, and slot booking.', icon: Plane, color: 'sky' },
-                  { id: '6', title: '6. Smart Visa Guidance Engine', desc: 'Overseas documentation & ECR/ECNR passport routing.', icon: Compass, color: 'cyan' },
-                  { id: '7', title: '7. Vital Records Portal', desc: 'Birth, Death, and Marriage certificate requests.', icon: Heart, color: 'rose' },
-                  { id: '8', title: '8. Emergency SOS Hotline', desc: 'One-tap triggers for 112, Women Helpline, & utilities.', icon: PhoneCall, color: 'red' },
-                  { id: '9', title: '9. Welfare Scheme Matchmaker', desc: 'Filter government welfare schemes by income and age.', icon: Gift, color: 'green' },
-                  { id: '10', title: '10. Anonymous Grievance Portal', desc: 'Encrypted report filing directly to anti-corruption units.', icon: Shield, color: 'slate' },
-                  { id: '11', title: '11. Universal MRO Portal', desc: 'Income, Caste, Residence, and Nativity applications.', icon: Landmark, color: 'orange' },
-                  { id: '12', title: '12. Pre-Submission AI Authenticator', desc: 'Check blur, structural compliance, and missing seals.', icon: HardDrive, color: 'teal' },
-                  { id: '13', title: '13. Secure Document Vault', desc: 'Local and cloud encrypted persistence vault.', icon: HardDrive, color: 'violet' },
-                  { id: '14', title: '14. Status Code Translator', desc: 'Decode bureaucratic rejection codes into simple advice.', icon: BookOpen, color: 'yellow' },
-                  { id: '15', title: '15. Data Saver Mode', desc: 'High-contrast, low-bandwidth mode for 2G/3G connections.', icon: Wifi, color: 'slate' }
+                  { id: '1', title: '1. Multilingual Voice Assistant', desc: 'Voice & text portal for 200+ Indian regional languages.', icon: Mic },
+                  { id: '2', title: '2. Step-by-Step Guided Wizards', desc: 'Decision-tree workflows for administrative updates.', icon: Map },
+                  { id: '3', title: '3. Parivahan & DL Hub', desc: "Learner's license, permanent DL, and vehicle renewal.", icon: Car },
+                  { id: '4', title: '4. Educational Document Verifier', desc: 'Board & University certificate authentication.', icon: FileCheck },
+                  { id: '5', title: '5. Passport Seva Guided Workflow', desc: 'Annexure creation, checklists, and slot booking.', icon: Plane },
+                  { id: '6', title: '6. Smart Visa Guidance Engine', desc: 'Overseas documentation & ECR/ECNR passport routing.', icon: Compass },
+                  { id: '7', title: '7. Vital Records Portal', desc: 'Birth, Death, and Marriage certificate requests.', icon: Heart },
+                  { id: '8', title: '8. Emergency SOS Hotline', desc: 'One-tap triggers for 112, Women Helpline, & utilities.', icon: PhoneCall },
+                  { id: '9', title: '9. Welfare Scheme Matchmaker', desc: 'Filter government welfare schemes by income and age.', icon: Gift },
+                  { id: '10', title: '10. Anonymous Grievance Portal', desc: 'Encrypted report filing directly to anti-corruption units.', icon: Shield },
+                  { id: '11', title: '11. Universal MRO Portal', desc: 'Income, Caste, Residence, and Nativity applications.', icon: Landmark },
+                  { id: '12', title: '12. Pre-Submission AI Authenticator', desc: 'Check blur, structural compliance, and missing seals.', icon: HardDrive },
+                  { id: '13', title: '13. Secure Document Vault', desc: 'Local and cloud encrypted persistence vault.', icon: HardDrive },
+                  { id: '14', title: '14. Status Code Translator', desc: 'Decode bureaucratic rejection codes into simple advice.', icon: BookOpen },
+                  { id: '15', title: '15. Data Saver Mode', desc: 'High-contrast, low-bandwidth mode for 2G/3G connections.', icon: Wifi }
                 ].map((item) => {
                   const IconComp = item.icon;
                   return (
@@ -594,3 +595,8 @@ export default function Dashboard() {
     </div>
   );
 }
+
+// Disable SSR to fix Netlify / Vercel client hydration state issues
+export default dynamic(() => Promise.resolve(DashboardContent), {
+  ssr: false,
+});
