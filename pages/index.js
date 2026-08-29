@@ -3,7 +3,7 @@ import {
   Phone, KeyRound, ShieldCheck, User, ArrowRight, LogOut,
   Mic, Map, Car, FileCheck, Plane, Compass, Heart, PhoneCall, 
   Gift, Shield, Landmark, HardDrive, BookOpen, 
-  Wifi, ScanText, Store, QrCode
+  Wifi, ScanText, Store, QrCode, AlertCircle, CheckCircle2
 } from 'lucide-react';
 
 // --- UPGRADE MODULE 1: DIGILOCKER SANDBOX ---
@@ -29,7 +29,7 @@ function DigiLockerSandbox() {
 
       {authState === 'idle' && (
         <button 
-          onClick={() => { setAuthState('connecting'); setTimeout(() => setAuthState('complete'), 1500); }}
+          onClick={() => { setAuthState('connecting'); setTimeout(() => setAuthState('complete'), 1200); }}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition"
         >
           <span>Connect & Sync with DigiLocker</span>
@@ -53,6 +53,7 @@ function DigiLockerSandbox() {
               <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">{doc.status}</span>
             </div>
           ))}
+          <button onClick={() => setAuthState('idle')} className="text-[11px] text-blue-600 underline mt-2 block mx-auto">Reset Demo</button>
         </div>
       )}
     </div>
@@ -69,7 +70,7 @@ function OCRAutoFill() {
     setTimeout(() => {
       setFormData({ fullName: 'Chethan Sai U', dob: '2000-05-12', state: 'Andhra Pradesh' });
       setIsProcessing(false);
-    }, 1500);
+    }, 1200);
   };
 
   return (
@@ -153,7 +154,6 @@ function KioskModeToggle({ isKioskMode, setIsKioskMode }) {
             <QrCode className="w-3.5 h-3.5" />
             <span>Collect Application Fee (UPI QR)</span>
           </button>
-          <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-1 rounded-md font-medium">Batch Queue: 0 Pending Submissions</span>
         </div>
       )}
 
@@ -179,7 +179,7 @@ function KioskModeToggle({ isKioskMode, setIsKioskMode }) {
   );
 }
 
-// --- AUTHENTICATION MODULE ---
+// --- AUTHENTICATION SYSTEM ---
 function AuthSystem({ onAuthChange }) {
   const [step, setStep] = useState('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -188,12 +188,18 @@ function AuthSystem({ onAuthChange }) {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('js_user_session');
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      setCurrentUser(parsed);
-      setStep('authenticated');
-      if (onAuthChange) onAuthChange(parsed);
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('js_user_session');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          setCurrentUser(parsed);
+          setStep('authenticated');
+          if (onAuthChange) onAuthChange(parsed);
+        } catch (e) {
+          localStorage.removeItem('js_user_session');
+        }
+      }
     }
   }, []);
 
@@ -209,14 +215,16 @@ function AuthSystem({ onAuthChange }) {
   const handleVerifyOtp = (e) => {
     e.preventDefault();
     if (otp.length === 4) {
-      const savedUser = localStorage.getItem('js_user_session');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setCurrentUser(parsed);
-        setStep('authenticated');
-        if (onAuthChange) onAuthChange(parsed);
-      } else {
-        setStep('profile');
+      if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('js_user_session');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          setCurrentUser(parsed);
+          setStep('authenticated');
+          if (onAuthChange) onAuthChange(parsed);
+        } else {
+          setStep('profile');
+        }
       }
     } else {
       alert('Please enter 4-digit OTP (e.g. 1234).');
@@ -236,14 +244,18 @@ function AuthSystem({ onAuthChange }) {
       pincode: userProfile.pincode,
       loggedInAt: new Date().toISOString()
     };
-    localStorage.setItem('js_user_session', JSON.stringify(userData));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('js_user_session', JSON.stringify(userData));
+    }
     setCurrentUser(userData);
     setStep('authenticated');
     if (onAuthChange) onAuthChange(userData);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('js_user_session');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('js_user_session');
+    }
     setCurrentUser(null);
     setPhoneNumber('');
     setOtp('');
@@ -413,16 +425,17 @@ function AuthSystem({ onAuthChange }) {
   );
 }
 
-// --- MAIN DASHBOARD WITH CONDITIONAL AUTH GUARD ---
+// --- MAIN DASHBOARD WITH INTERACTIVE MODALS ---
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('all');
   const [currentUser, setCurrentUser] = useState(null);
   const [isKioskMode, setIsKioskMode] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6">
       
-      {/* Header & Login Form */}
+      {/* Header & Auth */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex justify-between items-center mb-4">
           <div>
@@ -434,15 +447,13 @@ export default function Dashboard() {
         <AuthSystem onAuthChange={(user) => setCurrentUser(user)} />
       </div>
 
-      {/* DASHBOARD CONTENT (Only rendered when user is logged in) */}
+      {/* DASHBOARD CONTENT (Renders when logged in) */}
       {currentUser && (
         <>
-          {/* CSC Kiosk Agent Mode Toggle */}
           <div className="max-w-7xl mx-auto">
             <KioskModeToggle isKioskMode={isKioskMode} setIsKioskMode={setIsKioskMode} />
           </div>
 
-          {/* Tab Navigation */}
           <div className="max-w-7xl mx-auto mb-6 flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto">
             <button 
               onClick={() => setActiveTab('all')}
@@ -464,7 +475,6 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Feature Grid */}
           <div className="max-w-7xl mx-auto">
             {activeTab === 'digilocker' && <DigiLockerSandbox />}
             {activeTab === 'ocr' && <OCRAutoFill />}
@@ -479,7 +489,7 @@ export default function Dashboard() {
                     <h3 className="font-bold text-slate-900 text-sm">[UPGRADE] DigiLocker DPI Engine</h3>
                   </div>
                   <p className="text-xs text-slate-500 mb-4">Pull government-verified records directly using Digital India sandbox API.</p>
-                  <button onClick={() => setActiveTab('digilocker')} className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                  <button onClick={() => setActiveTab('digilocker')} className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white' : 'bg-blue-600 text-white'}`}>
                     {isKioskMode ? 'Agent Bulk Connect DigiLocker' : 'Connect DigiLocker'}
                   </button>
                 </div>
@@ -491,204 +501,94 @@ export default function Dashboard() {
                     <h3 className="font-bold text-slate-900 text-sm">[UPGRADE] Vision OCR Auto-Fill</h3>
                   </div>
                   <p className="text-xs text-slate-500 mb-4">Extract textual fields from scanned documents automatically into forms.</p>
-                  <button onClick={() => setActiveTab('ocr')} className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-purple-600 text-white hover:bg-purple-700'}`}>
+                  <button onClick={() => setActiveTab('ocr')} className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white' : 'bg-purple-600 text-white'}`}>
                     {isKioskMode ? 'Agent High-Speed Batch OCR' : 'Scan & Auto-Fill'}
                   </button>
                 </div>
 
                 {/* UPGRADE 3 */}
-                <div className="bg-white p-5 rounded-xl border border-amber-200 shadow-sm hover:shadow-md transition">
+                <div className="bg-white p-5 rounded-xl border border-amber-200 shadow-sm">
                   <div className="flex items-center space-x-3 mb-3">
                     <div className="p-2.5 bg-amber-100 text-amber-600 rounded-lg"><Store className="w-5 h-5" /></div>
                     <h3 className="font-bold text-slate-900 text-sm">[UPGRADE] CSC Agent Portal</h3>
                   </div>
                   <p className="text-xs text-slate-500 mb-4">MeeSeva kiosk operator tools with instant UPI payment processing.</p>
-                  <span className="inline-block w-full text-center text-xs text-amber-700 font-semibold bg-amber-50 border border-amber-200 py-1.5 rounded-lg">Active in Header Switch</span>
-                </div>
-
-                {/* CORE 1 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-indigo-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-lg"><Mic className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">1. Multilingual Voice Assistant</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Voice & text portal for 200+ Indian regional languages.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
-                    {isKioskMode ? 'Agent Assisted Voice Query' : 'Open Assistant'}
+                  <button onClick={() => setIsKioskMode(!isKioskMode)} className="w-full text-xs py-2 rounded-lg font-semibold bg-amber-50 border border-amber-200 text-amber-800">
+                    Toggle Kiosk Mode ({isKioskMode ? 'ON' : 'OFF'})
                   </button>
                 </div>
 
-                {/* CORE 2 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-emerald-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg"><Map className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">2. Step-by-Step Guided Wizards</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Decision-tree workflows for administrative updates.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                    {isKioskMode ? 'Agent Fast-Track Wizard' : 'Start Wizard'}
-                  </button>
-                </div>
-
-                {/* CORE 3 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-amber-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-amber-100 text-amber-600 rounded-lg"><Car className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">3. Parivahan & DL Hub</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Learner's license, permanent DL, and vehicle renewal.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                    {isKioskMode ? 'Counter DL Processing' : 'Access Parivahan'}
-                  </button>
-                </div>
-
-                {/* CORE 4 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-purple-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-purple-100 text-purple-600 rounded-lg"><FileCheck className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">4. Educational Document Verifier</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Board & University certificate authentication.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
-                    {isKioskMode ? 'Kiosk Verification Counter' : 'Verify Marksheets'}
-                  </button>
-                </div>
-
-                {/* CORE 5 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-sky-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-sky-100 text-sky-600 rounded-lg"><Plane className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">5. Passport Seva Guided Workflow</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Annexure creation, checklists, and slot booking.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-sky-50 text-sky-700 border-sky-200'}`}>
-                    {isKioskMode ? 'Agent Slot Booking Portal' : 'Open Passport Seva'}
-                  </button>
-                </div>
-
-                {/* CORE 6 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-cyan-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-cyan-100 text-cyan-600 rounded-lg"><Compass className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">6. Smart Visa Guidance Engine</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Overseas documentation & ECR/ECNR passport routing.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-cyan-50 text-cyan-700 border-cyan-200'}`}>
-                    {isKioskMode ? 'Agent Visa Routing' : 'Check Requirements'}
-                  </button>
-                </div>
-
-                {/* CORE 7 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-rose-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-rose-100 text-rose-600 rounded-lg"><Heart className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">7. Vital Records Portal</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Birth, Death, and Marriage certificate requests.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
-                    {isKioskMode ? 'Counter Vital Filing' : 'Manage Records'}
-                  </button>
-                </div>
-
-                {/* CORE 8 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-red-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-red-100 text-red-600 rounded-lg"><PhoneCall className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">8. Emergency SOS Hotline</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">One-tap triggers for 112, Women Helpline, & utilities.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                    {isKioskMode ? 'Agent Priority Dispatch' : 'Emergency Contacts'}
-                  </button>
-                </div>
-
-                {/* CORE 9 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-green-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-green-100 text-green-600 rounded-lg"><Gift className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">9. Welfare Scheme Matchmaker</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Filter government welfare schemes by income and age.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                    {isKioskMode ? 'Agent Scheme Eligibility Screening' : 'Match Schemes'}
-                  </button>
-                </div>
-
-                {/* CORE 10 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-slate-300'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-slate-800 text-white rounded-lg"><Shield className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">10. Anonymous Grievance Portal</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Encrypted report filing directly to anti-corruption units.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white' : 'bg-slate-800 text-white'}`}>
-                    {isKioskMode ? 'Agent Secure Portal Filing' : 'File Grievance'}
-                  </button>
-                </div>
-
-                {/* CORE 11 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-orange-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-orange-100 text-orange-600 rounded-lg"><Landmark className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">11. Universal MRO Portal</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Income, Caste, Residence, and Nativity applications.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                    {isKioskMode ? 'Agent MRO Application Desk' : 'Apply via MRO'}
-                  </button>
-                </div>
-
-                {/* CORE 12 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-teal-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-teal-100 text-teal-600 rounded-lg"><Shield className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">12. Pre-Submission AI Authenticator</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Check blur, structural compliance, and missing seals.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-teal-50 text-teal-700 border-teal-200'}`}>
-                    {isKioskMode ? 'Batch AI Document Audit' : 'Run Authenticator'}
-                  </button>
-                </div>
-
-                {/* CORE 13 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-violet-100'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-violet-100 text-violet-600 rounded-lg"><HardDrive className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">13. Secure Document Vault</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Local and cloud encrypted persistence vault.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-violet-50 text-violet-700 border-violet-200'}`}>
-                    {isKioskMode ? 'Agent Kiosk Storage Vault' : 'Manage Storage'}
-                  </button>
-                </div>
-
-                {/* CORE 14 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-yellow-200'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-yellow-100 text-yellow-700 rounded-lg"><BookOpen className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">14. Status Code Translator</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">Decode bureaucratic rejection codes into simple advice.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-yellow-50 text-yellow-800 border-yellow-200'}`}>
-                    {isKioskMode ? 'Agent Rejection Code Diagnostic' : 'Translate Code'}
-                  </button>
-                </div>
-
-                {/* CORE 15 */}
-                <div className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-slate-200'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2.5 bg-slate-100 text-slate-700 rounded-lg"><Wifi className="w-5 h-5" /></div>
-                    <h3 className="font-bold text-slate-900 text-sm">15. Data Saver Mode</h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-4">High-contrast, low-bandwidth mode for 2G/3G connections.</p>
-                  <button className={`w-full text-xs py-2 rounded-lg font-semibold border transition ${isKioskMode ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-100 text-slate-800 border-slate-300'}`}>
-                    {isKioskMode ? 'Kiosk Low-Bandwidth Mode' : 'Toggle Data Saver'}
-                  </button>
-                </div>
+                {/* CORE FEATURES 1-15 */}
+                {[
+                  { id: '1', title: '1. Multilingual Voice Assistant', desc: 'Voice & text portal for 200+ Indian regional languages.', icon: Mic, color: 'indigo' },
+                  { id: '2', title: '2. Step-by-Step Guided Wizards', desc: 'Decision-tree workflows for administrative updates.', icon: Map, color: 'emerald' },
+                  { id: '3', title: '3. Parivahan & DL Hub', desc: "Learner's license, permanent DL, and vehicle renewal.", icon: Car, color: 'amber' },
+                  { id: '4', title: '4. Educational Document Verifier', desc: 'Board & University certificate authentication.', icon: FileCheck, color: 'purple' },
+                  { id: '5', title: '5. Passport Seva Guided Workflow', desc: 'Annexure creation, checklists, and slot booking.', icon: Plane, color: 'sky' },
+                  { id: '6', title: '6. Smart Visa Guidance Engine', desc: 'Overseas documentation & ECR/ECNR passport routing.', icon: Compass, color: 'cyan' },
+                  { id: '7', title: '7. Vital Records Portal', desc: 'Birth, Death, and Marriage certificate requests.', icon: Heart, color: 'rose' },
+                  { id: '8', title: '8. Emergency SOS Hotline', desc: 'One-tap triggers for 112, Women Helpline, & utilities.', icon: PhoneCall, color: 'red' },
+                  { id: '9', title: '9. Welfare Scheme Matchmaker', desc: 'Filter government welfare schemes by income and age.', icon: Gift, color: 'green' },
+                  { id: '10', title: '10. Anonymous Grievance Portal', desc: 'Encrypted report filing directly to anti-corruption units.', icon: Shield, color: 'slate' },
+                  { id: '11', title: '11. Universal MRO Portal', desc: 'Income, Caste, Residence, and Nativity applications.', icon: Landmark, color: 'orange' },
+                  { id: '12', title: '12. Pre-Submission AI Authenticator', desc: 'Check blur, structural compliance, and missing seals.', icon: HardDrive, color: 'teal' },
+                  { id: '13', title: '13. Secure Document Vault', desc: 'Local and cloud encrypted persistence vault.', icon: HardDrive, color: 'violet' },
+                  { id: '14', title: '14. Status Code Translator', desc: 'Decode bureaucratic rejection codes into simple advice.', icon: BookOpen, color: 'yellow' },
+                  { id: '15', title: '15. Data Saver Mode', desc: 'High-contrast, low-bandwidth mode for 2G/3G connections.', icon: Wifi, color: 'slate' }
+                ].map((item) => {
+                  const IconComp = item.icon;
+                  return (
+                    <div key={item.id} className={`p-5 rounded-xl border shadow-sm transition ${isKioskMode ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-slate-200'}`}>
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="p-2.5 bg-slate-100 text-slate-700 rounded-lg"><IconComp className="w-5 h-5" /></div>
+                        <h3 className="font-bold text-slate-900 text-sm">{item.title}</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-4">{item.desc}</p>
+                      <button 
+                        onClick={() => setActiveModal(item)}
+                        className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                      >
+                        {isKioskMode ? `Agent Action: ${item.title.split('.')[1]}` : 'Launch Feature Module'}
+                      </button>
+                    </div>
+                  );
+                })}
 
               </div>
             )}
           </div>
+
+          {/* DYNAMIC MODAL POPUP FOR CORE FEATURES */}
+          {activeModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                    <activeModal.icon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">{activeModal.title}</h3>
+                    <p className="text-xs text-slate-500">JanSahayak Module Connected</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-xs space-y-2">
+                  <p className="font-semibold text-slate-700">{activeModal.desc}</p>
+                  <div className="flex items-center space-x-2 text-emerald-600 pt-2 border-t border-slate-200">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="font-medium text-[11px]">System Status: Online & Synchronized</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="w-full bg-indigo-600 text-white text-xs py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition"
+                >
+                  Close & Return to Hub
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
