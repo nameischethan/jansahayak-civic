@@ -4,8 +4,209 @@ import {
   Phone, KeyRound, ShieldCheck, User, ArrowRight, LogOut,
   Mic, Map, Car, FileCheck, Plane, Compass, Heart, PhoneCall, 
   Gift, Shield, Landmark, HardDrive, BookOpen, 
-  Wifi, ScanText, Store, QrCode, CheckCircle2
+  Wifi, ScanText, Store, QrCode, ExternalLink, CheckCircle2, ChevronRight, FileText
 } from 'lucide-react';
+
+// --- FEATURE MODULE ROADMAP DATA ENGINE ---
+const FEATURE_ROADMAPS = {
+  '1': {
+    title: 'Multilingual Voice Assistant',
+    subtitle: 'Voice-guided e-Governance navigation in 200+ Indian regional languages.',
+    portalUrl: 'https://bhashini.gov.in/',
+    portalName: 'Bhashini AI Portal',
+    steps: [
+      { title: 'Step 1: Select Native Language', desc: 'Choose from 22 official languages (Hindi, Telugu, Tamil, Kannada, Bengali, etc.).' },
+      { title: 'Step 2: Voice / Text Prompting', desc: 'Speak or type your administrative query (e.g., "How to apply for Ration Card?").' },
+      { title: 'Step 3: AI Translation & Routing', desc: 'Bhashini engine parses dialect and routes you directly to the relevant state service page.' }
+    ],
+    documents: ['No documents required for voice navigation inquiry.'],
+    fee: 'Free Public Service'
+  },
+  '2': {
+    title: 'Step-by-Step Guided Wizards',
+    subtitle: 'Decision-tree workflow for complex administrative updates.',
+    portalUrl: 'https://services.india.gov.in/',
+    portalName: 'National Services Portal',
+    steps: [
+      { title: 'Step 1: Administrative Needs Assessment', desc: 'Select task: Address Change, Name Update, or Family Additions.' },
+      { title: 'Step 2: Cross-Portal Document Pre-Check', desc: 'Interactive checklist verifies if your supporting IDs match across state databases.' },
+      { title: 'Step 3: Unified Form Generation', desc: 'Generates pre-filled PDF application accepted by local Tehsil / MeeSeva counters.' }
+    ],
+    documents: ['Existing Aadhaar Card', 'Utility Bill (Electricity/Water)', 'Rent Agreement or Property Deed'],
+    fee: 'Free Guidance'
+  },
+  '3': {
+    title: 'Parivahan & Driving License Hub',
+    subtitle: 'End-to-End Driving License (DL) & Vehicle Registration Roadmap.',
+    portalUrl: 'https://parivahan.gov.in/',
+    portalName: 'Parivahan Sewa Portal',
+    steps: [
+      { title: 'Step 1: Apply for Learner\'s License (LL)', desc: 'Submit Form 2 online on Parivahan, upload Aadhaar, and clear the online Road Safety Quiz.' },
+      { title: 'Step 2: Practice Period (30 Days)', desc: 'Hold Learner\'s License for a mandatory 30-day period before scheduling driving track test.' },
+      { title: 'Step 3: Book RTO Slot & Practical Test', desc: 'Schedule slot via Sarathi portal, pay ₹200 fee, and present vehicle at RTO for test.' },
+      { title: 'Step 4: Smart Card DL Issuance', desc: 'Upon clearing driving test, Smart Card DL is dispatched via Speed Post in 7-14 days.' }
+    ],
+    documents: ['Aadhaar Card (Age & Address Proof)', 'Form 1A Medical Fitness Certificate (if age > 40)', 'Passport Size Photographs'],
+    fee: '₹200 (LL Test) + ₹300 (Permanent DL Test) + ₹200 (Smart Card Fee)'
+  },
+  '4': {
+    title: 'Educational Document Verifier',
+    subtitle: 'Verify Class X, XII, and University marksheets via NAD / DigiLocker.',
+    portalUrl: 'https://nad.digilocker.gov.in/',
+    portalName: 'National Academic Depository',
+    steps: [
+      { title: 'Step 1: Input Educational Roll Number', desc: 'Enter Roll Number, Board (CBSE, ICSE, State Board), and Passing Year.' },
+      { title: 'Step 2: Direct Board API Lookup', desc: 'Authenticates record directly against central board servers.' },
+      { title: 'Step 3: Issue PKI Signed Certificate', desc: 'Downloads tamper-proof digitally signed marksheet PDF.' }
+    ],
+    documents: ['Admit Card / Roll Number', 'Aadhaar Number linked with Mobile'],
+    fee: 'Free'
+  },
+  '5': {
+    title: 'Passport Seva Guided Workflow',
+    subtitle: 'Fresh Passport application & Slot Booking roadmap.',
+    portalUrl: 'https://www.passportindia.gov.in/',
+    portalName: 'Passport Seva Official Site',
+    steps: [
+      { title: 'Step 1: Register on Passport Portal', desc: 'Create user account and select your nearest Passport Seva Kendra (PSK).' },
+      { title: 'Step 2: Fill Application & Pay Fee', desc: 'Complete Online Form (Normal or Tatkaal) and pay ₹1,500 fee online.' },
+      { title: 'Step 3: PSK Appointment & Verification', desc: 'Visit PSK for biometrics & photo capture with original physical documents.' },
+      { title: 'Step 4: Police Verification (PV)', desc: 'Local police station verifies residency details before final passport dispatch.' }
+    ],
+    documents: ['Aadhaar Card', 'PAN Card / Voter ID', 'Birth Certificate / Class X Marksheet'],
+    fee: '₹1,500 (Normal - 36 Pages) / ₹3,500 (Tatkaal)'
+  },
+  '6': {
+    title: 'Smart Visa Guidance Engine',
+    subtitle: 'Overseas visa requirements, document translation, and ECR/ECNR clearance.',
+    portalUrl: 'https://emigrate.gov.in/',
+    portalName: 'eMigrate India Portal',
+    steps: [
+      { title: 'Step 1: Select Destination Country', desc: 'Check visa category (Tourist, Student, Work) and ECR/ECNR status.' },
+      { title: 'Step 2: Document Attestation Checklist', desc: 'Get degree certificates attested by MEA (Ministry of External Affairs) if required.' },
+      { title: 'Step 3: Embassy / VFS Slot Booking', desc: 'Submit application via official VFS Global or Embassy portal.' }
+    ],
+    documents: ['Valid Passport (Min 6 months validity)', 'Bank Statements (6 months)', 'Flight & Hotel Bookings'],
+    fee: 'Varies by destination country'
+  },
+  '7': {
+    title: 'Vital Records Portal',
+    subtitle: 'Roadmap to obtain Birth, Death, and Marriage Certificates.',
+    portalUrl: 'https://crsorgi.gov.in/',
+    portalName: 'Civil Registration System (CRS)',
+    steps: [
+      { title: 'Step 1: Hospital / Gram Panchayat Filing', desc: 'Ensure event registration within 21 days of birth or death.' },
+      { title: 'Step 2: Online Search on CRS Portal', desc: 'Locate registration number using date and institutional location.' },
+      { title: 'Step 3: Digital Download or Doorstep Delivery', desc: 'Download QR-verified digital certificate instantly.' }
+    ],
+    documents: ['Hospital Discharge Summary / Death Note', 'Parents/Spouse Aadhaar Card'],
+    fee: 'Free within 21 days / ₹20-₹100 for delayed filing'
+  },
+  '8': {
+    title: 'Emergency SOS Hotline',
+    subtitle: 'Unified emergency response dispatch hub.',
+    portalUrl: 'https://112.gov.in/',
+    portalName: 'National Emergency Response System (112)',
+    steps: [
+      { title: 'Police / Fire / Ambulance', desc: 'Dial 112 for instant unified emergency response.' },
+      { title: 'Women Helpline', desc: 'Dial 1091 for emergency women safety assistance.' },
+      { title: 'Cyber Crime Emergency', desc: 'Dial 1930 to freeze fraudulent financial transactions.' }
+    ],
+    documents: ['No documentation needed for emergency dispatch.'],
+    fee: 'Toll Free (24/7 Service)'
+  },
+  '9': {
+    title: 'Welfare Scheme Matchmaker',
+    subtitle: 'Find eligible central & state government welfare schemes.',
+    portalUrl: 'https://www.myscheme.gov.in/',
+    portalName: 'myScheme Central Portal',
+    steps: [
+      { title: 'Step 1: Enter Demographics', desc: 'Input Age, Gender, Income level, Category, and State of residence.' },
+      { title: 'Step 2: AI Eligibility Screening', desc: 'System filters 2,000+ schemes down to ones you qualify for (e.g., PM-KISAN, PMAY).' },
+      { title: 'Step 3: One-Click Direct Application', desc: 'Routes directly to official scheme enrollment portal with pre-verified details.' }
+    ],
+    documents: ['Income Certificate', 'Caste/Category Certificate (if applicable)', 'Aadhaar Card'],
+    fee: 'Free Public Service'
+  },
+  '10': {
+    title: 'Anonymous Grievance Portal',
+    subtitle: 'Encrypted administrative complaint filing.',
+    portalUrl: 'https://pgportal.gov.in/',
+    portalName: 'CPGRAMS Central Portal',
+    steps: [
+      { title: 'Step 1: Select Ministry / Department', desc: 'Choose targeted central ministry, public sector unit, or state department.' },
+      { title: 'Step 2: Attach Evidence & Statement', desc: 'Upload documents or photos describing the grievance.' },
+      { title: 'Step 3: Track Real-Time Resolution', desc: 'Receive unique registration number to track action within 30 days.' }
+    ],
+    documents: ['Proof of Complaint / Correspondence / Receipts'],
+    fee: 'Free'
+  },
+  '11': {
+    title: 'Universal MRO Portal',
+    subtitle: 'Income, Caste, Residence, and Nativity Certificate application.',
+    portalUrl: 'https://services.india.gov.in/',
+    portalName: 'State Revenue Services (MRO/Tahsildar)',
+    steps: [
+      { title: 'Step 1: Select Revenue Service', desc: 'Choose required certificate (Income, Caste, Residence, EWS).' },
+      { title: 'Step 2: Local VRO Inspection', desc: 'Application is routed to Village Revenue Officer (VRO) for field verification.' },
+      { title: 'Step 3: MRO Digital Signature & Download', desc: 'Tahsildar signs certificate digitally; download PDF via MeeSeva / Seva Sindhu.' }
+    ],
+    documents: ['Aadhaar Card', 'Ration Card', 'Self-Declaration Form', 'Salary Slips / Property Tax Receipt'],
+    fee: '₹35 - ₹50'
+  },
+  '12': {
+    title: 'Pre-Submission AI Authenticator',
+    subtitle: 'Scan documents for blur, compliance, missing stamps, and signature validity.',
+    portalUrl: 'https://uidai.gov.in/',
+    portalName: 'Digital India Document AI Standards',
+    steps: [
+      { title: 'Step 1: Upload Document Image', desc: 'Upload JPG or PDF scan of your certificate.' },
+      { title: 'Step 2: Computer Vision Audit', desc: 'Scans for resolution > 300 DPI, missing gazetted stamps, and clear signatures.' },
+      { title: 'Step 3: Compliance Pass/Fail Report', desc: 'Highlights missing fields to prevent application rejection by officers.' }
+    ],
+    documents: ['PDF/Image of document to be checked'],
+    fee: 'Free Tool'
+  },
+  '13': {
+    title: 'Secure Document Vault',
+    subtitle: 'AES-256 encrypted local & cloud document storage for government IDs.',
+    portalUrl: 'https://www.digilocker.gov.in/',
+    portalName: 'DigiLocker Personal Cloud',
+    steps: [
+      { title: 'Step 1: Encrypted Storage Allocation', desc: 'Allocates 1GB biometric-secured cloud storage.' },
+      { title: 'Step 2: Categorized Auto-Sorting', desc: 'Automatically organizes uploaded PDFs into Identity, Tax, and Education folders.' },
+      { title: 'Step 3: Quick Share Links', desc: 'Generate 15-minute secure QR links for counter verification.' }
+    ],
+    documents: ['Any official PDF or image document'],
+    fee: 'Free'
+  },
+  '14': {
+    title: 'Status Code Translator',
+    subtitle: 'Decode rejection codes into actionable resolution steps.',
+    portalUrl: 'https://uidai.gov.in/',
+    portalName: 'JanSahayak Bureaucratic Code AI',
+    steps: [
+      { title: 'Step 1: Paste Rejection Code', desc: 'Enter code from SMS/Portal (e.g., "ERR_ADDR_MISMATCH_04").' },
+      { title: 'Step 2: Plain Language Translation', desc: 'Translates technical jargon: "Your address proof does not match your pin code."' },
+      { title: 'Step 3: Fix Checklist', desc: 'Provides immediate corrective action steps to resubmit successfully.' }
+    ],
+    documents: ['Rejection Notice / Application Number'],
+    fee: 'Free Tool'
+  },
+  '15': {
+    title: 'Data Saver Mode',
+    subtitle: 'Ultra low-bandwidth text-only portal optimized for 2G/3G connectivity.',
+    portalUrl: 'https://web.umang.gov.in/',
+    portalName: 'UMANG Lite Portal',
+    steps: [
+      { title: 'Step 1: Strip Heavy Assets', desc: 'Disables high-res imagery, videos, and heavy scripts.' },
+      { title: 'Step 2: Compressed API Handshake', desc: 'Reduces data payload per request to under 15 KB.' },
+      { title: 'Step 3: Offline Draft Cache', desc: 'Saves form data locally if connection drops in rural areas.' }
+    ],
+    documents: ['None'],
+    fee: 'Free Mode'
+  }
+};
 
 // --- UPGRADE MODULE 1: DIGILOCKER SANDBOX ---
 function DigiLockerSandbox() {
@@ -431,7 +632,9 @@ function DashboardContent() {
   const [activeTab, setActiveTab] = useState('all');
   const [currentUser, setCurrentUser] = useState(null);
   const [isKioskMode, setIsKioskMode] = useState(false);
-  const [activeModal, setActiveModal] = useState(null);
+  const [selectedFeatureId, setSelectedFeatureId] = useState(null);
+
+  const activeRoadmap = selectedFeatureId ? FEATURE_ROADMAPS[selectedFeatureId] : null;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-6">
@@ -546,10 +749,11 @@ function DashboardContent() {
                       </div>
                       <p className="text-xs text-slate-500 mb-4">{item.desc}</p>
                       <button 
-                        onClick={() => setActiveModal(item)}
-                        className={`w-full text-xs py-2 rounded-lg font-semibold transition ${isKioskMode ? 'bg-amber-600 text-white' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                        onClick={() => setSelectedFeatureId(item.id)}
+                        className={`w-full text-xs py-2 rounded-lg font-semibold flex items-center justify-center space-x-1 transition ${isKioskMode ? 'bg-amber-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
                       >
-                        {isKioskMode ? `Agent Action: ${item.title.split('.')[1]}` : 'Launch Feature Module'}
+                        <span>View Step-by-Step Roadmap</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   );
@@ -559,34 +763,94 @@ function DashboardContent() {
             )}
           </div>
 
-          {/* DYNAMIC MODAL POPUP FOR CORE FEATURES */}
-          {activeModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
-                    <activeModal.icon className="w-6 h-6" />
-                  </div>
+          {/* DETAILED ROADMAP MODAL POPUP */}
+          {activeRoadmap && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                
+                {/* Modal Header */}
+                <div className="p-6 bg-slate-900 text-white flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-slate-900 text-base">{activeModal.title}</h3>
-                    <p className="text-xs text-slate-500">JanSahayak Module Connected</p>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500 text-white px-2 py-0.5 rounded">Official Service Guide</span>
+                    <h3 className="font-bold text-lg mt-1">{activeRoadmap.title}</h3>
+                    <p className="text-xs text-slate-300">{activeRoadmap.subtitle}</p>
                   </div>
+                  <button 
+                    onClick={() => setSelectedFeatureId(null)}
+                    className="text-slate-400 hover:text-white bg-slate-800 p-1.5 rounded-lg text-xs font-bold"
+                  >
+                    ✕
+                  </button>
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-xs space-y-2">
-                  <p className="font-semibold text-slate-700">{activeModal.desc}</p>
-                  <div className="flex items-center space-x-2 text-emerald-600 pt-2 border-t border-slate-200">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="font-medium text-[11px]">System Status: Online & Synchronized</span>
+                {/* Modal Scrollable Body */}
+                <div className="p-6 overflow-y-auto space-y-6">
+                  
+                  {/* Step-by-Step Process */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center space-x-1">
+                      <ChevronRight className="w-4 h-4 text-indigo-600" />
+                      <span>Application Roadmap & Procedure</span>
+                    </h4>
+                    <div className="space-y-3">
+                      {activeRoadmap.steps.map((step, idx) => (
+                        <div key={idx} className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-start space-x-3">
+                          <span className="bg-indigo-600 text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">{step.title}</p>
+                            <p className="text-[11px] text-slate-600 mt-0.5">{step.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Required Documents Checklist */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center space-x-1">
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <span>Required Supporting Documents</span>
+                    </h4>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {activeRoadmap.documents.map((doc, idx) => (
+                        <li key={idx} className="flex items-center space-x-2 text-xs text-slate-700 bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-lg">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          <span>{doc}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Fee Structure */}
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex justify-between items-center text-xs">
+                    <span className="font-bold text-amber-900">Estimated Official Fee:</span>
+                    <span className="font-semibold text-amber-800 bg-white px-2.5 py-1 rounded-md border border-amber-300">{activeRoadmap.fee}</span>
+                  </div>
+
                 </div>
 
-                <button 
-                  onClick={() => setActiveModal(null)}
-                  className="w-full bg-indigo-600 text-white text-xs py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition"
-                >
-                  Close & Return to Hub
-                </button>
+                {/* Modal Footer (Direct Portal Redirect) */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                  <button 
+                    onClick={() => setSelectedFeatureId(null)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition"
+                  >
+                    Back to Hub
+                  </button>
+
+                  <a 
+                    href={activeRoadmap.portalUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center space-x-1.5 transition shadow-md"
+                  >
+                    <span>Proceed to Official {activeRoadmap.portalName}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
               </div>
             </div>
           )}
@@ -596,7 +860,7 @@ function DashboardContent() {
   );
 }
 
-// Disable SSR to fix Netlify / Vercel client hydration state issues
+// Disable SSR to prevent Netlify hydration errors
 export default dynamic(() => Promise.resolve(DashboardContent), {
   ssr: false,
 });
