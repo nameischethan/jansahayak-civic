@@ -1,5 +1,5 @@
 import '../styles/globals.css';
-import { AppProvider } from '../context/AppContext'; // Adjust path if your AppContext is located elsewhere
+import { AppProvider } from '../context/AppContext'; // Update this import path to match your AppContext file
 
 export default function App({ Component, pageProps }) {
   return (
